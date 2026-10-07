@@ -27,9 +27,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.pincatcher.core.data.db.Flow
-import com.pincatcher.core.data.db.FlowStore
-import com.pincatcher.core.data.db.PincatcherDatabase
+import com.pincatcher.data.Flow
+import com.pincatcher.data.FlowStore
+import com.pincatcher.data.PincatcherDatabase
 import com.pincatcher.ui.component.EmptyState
 import com.pincatcher.ui.component.PressableRow
 import com.pincatcher.ui.component.SectionRule

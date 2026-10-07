@@ -1,4 +1,4 @@
-package com.pincatcher.core.data.db
+package com.pincatcher.data
 
 /**
  * Query surface over [PincatcherDatabase].

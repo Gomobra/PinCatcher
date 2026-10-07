@@ -14,7 +14,19 @@ Thanks for looking at PinCatcher.
 1. Fork, branch off `main`.
 2. Make the change, keeping the diff as small as it can be.
 3. `./gradlew :core:test :app:assembleDebug :app:lintDebug` must pass.
+4. Delete the Gradle cache afterwards — see "Build hygiene" in
+   `docs/ARCHITECTURE.md` for which part to delete and which part costs a
+   re-download.
 4. Open a PR describing what changed and why.
+
+## Layout
+
+`docs/ARCHITECTURE.md` is the source of truth. The short version: module
+`:core` owns the package prefix `com.pincatcher.core.*`, module `:app` owns
+everything else, and both use `src/<set>/kotlin` — never `java`.
+
+One public composable per file, named after it. No raw colour or dp outside
+`ui/theme/Token.kt`.
 
 ## Style
 

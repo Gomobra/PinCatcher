@@ -43,7 +43,7 @@ private enum class Tab(val labelRes: Int) {
 }
 
 @Composable
-fun PinCatcherApp() {
+fun AppShell() {
     var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
 
     Scaffold(

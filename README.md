@@ -37,6 +37,7 @@ Done so far:
 ```
 
 Requires JDK 17+ and Android SDK with platform 37.2 + build-tools 37.
+`docs/ARCHITECTURE.md` has the on-device build overrides (native aapt2, build dir).
 
 ### Building on a phone
 

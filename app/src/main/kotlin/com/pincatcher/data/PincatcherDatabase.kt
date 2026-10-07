@@ -1,4 +1,4 @@
-package com.pincatcher.core.data.db
+package com.pincatcher.data
 
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase

@@ -1,9 +1,9 @@
 package com.pincatcher
 
 import android.app.Application
-import com.pincatcher.core.data.db.BodyStore
-import com.pincatcher.core.data.db.FlowStore
-import com.pincatcher.core.data.db.PincatcherDatabase
+import com.pincatcher.data.BodyStore
+import com.pincatcher.data.FlowStore
+import com.pincatcher.data.PincatcherDatabase
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.dsl.module

@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import com.pincatcher.ui.PinCatcherApp
+import com.pincatcher.ui.AppShell
 import com.pincatcher.ui.theme.PinCatcherTheme
 
 class MainActivity : ComponentActivity() {
@@ -13,7 +13,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             PinCatcherTheme {
-                PinCatcherApp()
+                AppShell()
             }
         }
     }

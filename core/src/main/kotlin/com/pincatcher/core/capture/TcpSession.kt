@@ -1,4 +1,4 @@
-package com.pincatcher.capture.net
+package com.pincatcher.core.capture
 
 /**
  * Signed 32-bit sequence arithmetic.

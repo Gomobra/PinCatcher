@@ -16,8 +16,8 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import com.pincatcher.core.data.db.BodyStore
-import com.pincatcher.core.data.db.PincatcherDatabase
+import com.pincatcher.data.BodyStore
+import com.pincatcher.data.PincatcherDatabase
 import com.pincatcher.core.domain.StoragePolicy
 import com.pincatcher.ui.component.SectionRule
 import com.pincatcher.ui.component.Stat
