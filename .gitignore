@@ -22,3 +22,7 @@ keystore.properties
 
 # Locally-generated install key. Never commit; CI uses its own from secrets.
 debug-install.jks
+
+# Locally built APK kept at the root for sideloading. Regenerate with
+# ./gradlew :app:assembleDebug; never committed.
+PinCatcher-debug.apk
