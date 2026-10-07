@@ -10,7 +10,7 @@ Platform: Android Native
 Lisensi: Open Source (Apache-2.0)
 Distribusi: GitHub Releases + F-Droid
 Target Utama: Android 13 (API 33)
-Pengembangan: OpenCode-assisted, mobile-first workflow
+Pengembangan: Mobile-first workflow, on-device
 
 ---
 
@@ -1948,11 +1948,11 @@ Auto-update In-app updater + Obtainium
 Docs README + Wiki
 Community GitHub Discussions + Telegram
 
-7.8 Development Workflow (OpenCode)
+7.8 Development Workflow
 
 Mobile-first development:
 
-· Semua coding via OpenCode di HP
+· Semua coding dilakukan di HP
 · Git operations via Termux / MGit
 · Build via GitHub Actions (tidak build lokal)
 · Test via CI + manual di device
@@ -2174,5 +2174,5 @@ Dokumen ini adalah living document. Setiap perubahan signifikan akan dicatat di 
 
 Changelog:
 
-· v1.0 (initial): Full PRD — non-root, Flutter support, storage optimization, open source, GitHub distribution, OpenCode workflow.
+· v1.0 (initial): Full PRD — non-root, Flutter support, storage optimization, open source, GitHub distribution.
 · v1.0 (revised): Clean version, no blockers, all decisions finalized.
