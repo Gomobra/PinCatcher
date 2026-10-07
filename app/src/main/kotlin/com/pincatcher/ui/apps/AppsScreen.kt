@@ -1,4 +1,4 @@
-package com.pincatcher.ui.home
+package com.pincatcher.ui.apps
 
 import android.content.Context
 import androidx.compose.foundation.Image
@@ -50,7 +50,7 @@ import com.pincatcher.ui.theme.Token
  * says so rather than pretending a tap does something it cannot.
  */
 @Composable
-fun HomeScreen(modifier: Modifier = Modifier) {
+fun AppsScreen(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     var apps by remember { mutableStateOf<List<InstalledApp>?>(null) }
     var query by remember { mutableStateOf("") }

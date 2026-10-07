@@ -19,32 +19,34 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.unit.dp
 import com.pincatcher.R
+import com.pincatcher.ui.apps.AppsScreen
 import com.pincatcher.ui.capture.CaptureScreen
-import com.pincatcher.ui.home.HomeScreen
-import com.pincatcher.ui.inspector.InspectorScreen
 import com.pincatcher.ui.settings.SettingsScreen
 import com.pincatcher.ui.theme.Token
+import com.pincatcher.ui.traffic.TrafficScreen
 
 /**
- * Four destinations, no top bar.
+ * Bottom navigation, ordered by what the user does first.
  *
- * Each screen carries its own heading, so a persistent app bar would repeat the
- * title on every page. The nav is a plain label row rather than icons-plus-labels:
- * at four items the labels are what disambiguate them, and the icon set is not
- * worth the bytes.
+ * Capture leads because it is the only thing that produces traffic, and Traffic
+ * follows because it is where they look next - the same order Reqable's desktop
+ * puts its Traffic tab in. Apps sits third because choosing a target is setup
+ * rather than the daily loop.
+ *
+ * No top bar: each screen carries its own heading, so a persistent app bar would
+ * repeat the title on every page.
  */
 private enum class Tab(val labelRes: Int) {
-    HOME(R.string.nav_home),
     CAPTURE(R.string.nav_capture),
-    INSPECTOR(R.string.nav_inspector),
+    TRAFFIC(R.string.nav_traffic),
+    APPS(R.string.nav_apps),
     SETTINGS(R.string.nav_settings),
 }
 
 @Composable
 fun AppShell() {
-    var tab by rememberSaveable { mutableStateOf(Tab.HOME) }
+    var tab by rememberSaveable { mutableStateOf(Tab.CAPTURE) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -82,9 +84,9 @@ fun AppShell() {
                 .padding(padding),
         ) {
             when (tab) {
-                Tab.HOME -> HomeScreen()
                 Tab.CAPTURE -> CaptureScreen()
-                Tab.INSPECTOR -> InspectorScreen()
+                Tab.TRAFFIC -> TrafficScreen()
+                Tab.APPS -> AppsScreen()
                 Tab.SETTINGS -> SettingsScreen()
             }
         }

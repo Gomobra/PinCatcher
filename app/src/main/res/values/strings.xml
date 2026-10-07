@@ -8,15 +8,15 @@
     <string name="disclaimer_accept">I understand and accept</string>
 
     <!-- Nav -->
-    <string name="nav_home">Home</string>
+    <string name="nav_apps">Apps</string>
     <string name="nav_capture">Capture</string>
-    <string name="nav_inspector">Inspector</string>
+    <string name="nav_traffic">Traffic</string>
     <string name="nav_settings">Settings</string>
 
     <!-- Home -->
-    <string name="home_pick_app">Pick an installed app</string>
-    <string name="home_pick_file">Open an APK file</string>
-    <string name="home_empty">No apps scanned yet. Pick an app to extract and analyse its APK.</string>
+    <string name="apps_pick">Pick an installed app</string>
+    <string name="apps_pick_file">Open an APK file</string>
+    <string name="apps_empty">No apps scanned yet. Pick an app to extract and analyse its APK.</string>
 
     <!-- Capture -->
     <string name="capture_start">Start capture</string>
@@ -26,8 +26,8 @@
     <string name="capture_ca_needed">Install the PinCatcher CA certificate before capturing HTTPS.</string>
 
     <!-- Inspector -->
-    <string name="inspector_empty">No flows captured yet.</string>
-    <string name="inspector_search">Search URL, headers</string>
+    <string name="traffic_empty">No flows captured yet.</string>
+    <string name="traffic_search">Search URL, headers</string>
     <string name="inspector_export_har">Export HAR</string>
     <string name="inspector_export_curl">Copy as cURL</string>
     <string name="inspector_replay">Replay</string>

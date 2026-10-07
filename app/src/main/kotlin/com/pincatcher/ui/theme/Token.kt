@@ -100,6 +100,14 @@ object Token {
     val ListIconSize = 40.dp
     val StatusDotSize = 8.dp
 
+    // ---- Traffic list columns -------------------------------------------
+    // Fixed widths for the columns that must line up across every row. The
+    // host/path column takes whatever is left, so it is not given a token.
+    val ColumnMethod = 56.dp
+    val ColumnStatus = 44.dp
+    val ColumnHeaderHeight = 28.dp
+    val RowMinHeight = 56.dp
+
     val CornerRadius = 8.dp
 }
 

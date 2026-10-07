@@ -6,14 +6,14 @@
     <string name="disclaimer_body">PinCatcher предназначен для анализа APK, на анализ которых у вас есть разрешение. Использовать его для доступа к данным без разрешения незаконно. Всё работает локально на вашем устройстве — ничего не отправляется.</string>
     <string name="disclaimer_accept">Я понимаю и принимаю</string>
 
-    <string name="nav_home">Главная</string>
+    <string name="nav_apps">Приложения</string>
     <string name="nav_capture">Захват</string>
-    <string name="nav_inspector">Инспектор</string>
+    <string name="nav_traffic">Трафик</string>
     <string name="nav_settings">Настройки</string>
 
-    <string name="home_pick_app">Выберите установленное приложение</string>
-    <string name="home_pick_file">Открыть файл APK</string>
-    <string name="home_empty">Приложения ещё не просканированы. Выберите приложение, чтобы извлечь и проанализировать его APK.</string>
+    <string name="apps_pick">Выберите установленное приложение</string>
+    <string name="apps_pick_file">Открыть файл APK</string>
+    <string name="apps_empty">Приложения ещё не просканированы. Выберите приложение, чтобы извлечь и проанализировать его APK.</string>
 
     <string name="capture_start">Начать захват</string>
     <string name="capture_stop">Остановить захват</string>
@@ -21,8 +21,8 @@
     <string name="capture_vpn_needed">Android требует разрешения на создание туннеля захвата.</string>
     <string name="capture_ca_needed">Установите сертификат CA PinCatcher перед захватом HTTPS.</string>
 
-    <string name="inspector_empty">Потоков пока нет.</string>
-    <string name="inspector_search">Поиск по URL, заголовкам</string>
+    <string name="traffic_empty">Потоков пока нет.</string>
+    <string name="traffic_search">Поиск по URL, заголовкам</string>
     <string name="inspector_export_har">Экспорт HAR</string>
     <string name="inspector_export_curl">Копировать как cURL</string>
     <string name="inspector_replay">Повторить</string>
