@@ -4,8 +4,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.ksp)
-    alias(libs.plugins.detekt)
 }
 
 android {
@@ -67,10 +65,9 @@ android {
     }
 }
 
-// With AGP 9 built-in Kotlin we get the kotlin-stdlib automatically; only the
-// Compose compiler plugin needs an explicit `apply`.
-
 dependencies {
+    implementation(project(":core"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -85,10 +82,6 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     debugImplementation(libs.compose.ui.tooling)
 
-    implementation(libs.room.runtime)
-    implementation(libs.room.ktx)
-    ksp(libs.room.compiler)
-
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
 
@@ -97,19 +90,8 @@ dependencies {
 
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
-
-    testImplementation(libs.junit.jupiter)
-    testImplementation(libs.kotlinx.coroutines.test)
-    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
-}
-
-detekt {
-    buildUponDefaultConfig = true
-    allRules = false
-    config.setFrom(rootProject.file("config/detekt/detekt.yml"))
-    baseline = rootProject.file("config/detekt/baseline.xml").takeIf { it.exists() }
 }

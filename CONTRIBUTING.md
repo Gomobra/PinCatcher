@@ -13,13 +13,15 @@ Thanks for looking at PinCatcher.
 
 1. Fork, branch off `main`.
 2. Make the change, keeping the diff as small as it can be.
-3. `./gradlew :app:assembleDebug :app:testDebugUnitTest :app:detekt` must pass.
+3. `./gradlew :core:test :app:assembleDebug :app:lintDebug` must pass.
 4. Open a PR describing what changed and why.
 
 ## Style
 
 * Kotlin official style guide.
-* Detekt is the gate; do not suppress a finding without a comment saying why.
+* Android Lint is the gate; do not suppress a finding without a comment saying why.
+* Unit tests for logic that does not need Android belong in `:core`, not `:app`,
+  so they run without the SDK and without `aapt2`.
 * Prefer the platform or an existing dependency over a new one. If you add a
   dependency, add a row to `LICENSES.md`.
 

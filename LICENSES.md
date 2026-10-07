@@ -28,15 +28,19 @@ GPL-incompatible policy cannot contribute. That trade is deliberate.
 | [APKEditor](https://github.com/REAndroid/APKEditor) | Apache-2.0 | split-APK merge logic reference |
 | [OkHttp](https://square.github.io/okhttp/) | Apache-2.0 | upstream HTTP client (HTTP/2, gzip, brotli, pooling) |
 | [Koin](https://insert-koin.io) | Apache-2.0 | DI |
-| [Jetpack Compose / Room](https://developer.android.com/jetpack) | Apache-2.0 | UI, persistence |
+| [Jetpack Compose](https://developer.android.com/jetpack) | Apache-2.0 | UI |
 | [apksig](https://github.com/google/apksig) | Apache-2.0 | APK signing (v2 + v3) |
 | [dexlib2](https://github.com/smali/dexlib2) | Apache-2.0 | DEX read/patch |
+
+Persistence uses the platform's own `android.database.sqlite` — no ORM dependency.
 
 ## Rejected, and why
 
 | Component | Problem |
 |---|---|
+| Room | Its compiler verifies queries by opening an in-memory database through xerial sqlite-jdbc, a **glibc**-linked native library. It cannot load on Android/bionic, and glibc's libc cannot be mixed into a bionic process. We develop on-device, so Room was unbuildable — and its handling of an FTS4 external-content table is the part of this schema that most needed to be readable and auditable anyway. Replaced with `SQLiteOpenHelper`. |
 | FTS5 | Not compiled into Android's platform SQLite. Requires `BundledSQLiteDriver` (own SQLite, NDK, ~2 MB). FTS4 covers the same use case at zero cost. |
+| detekt | 1.23.8 (latest) crashes reading Kotlin 2.4 annotation metadata — `AnnotationSuppressorFactory` casts a `Boolean` to `Iterable`. Not a config problem; it reproduces with the stock default config. Android Lint is the static-analysis gate instead. |
 | Ktor CIO | An application server. No forward-proxy/CONNECT semantics, no per-host dynamic TLS serving, no HTTP/2. Wrong shape for a byte-level MITM. |
 | smali / baksmali | ~4 MB and a full disassemble/reassemble round-trip per APK, which is what blows the "patch under 3 minutes" budget. DEX method bodies are patched in place instead. |
 | Bundled `zipalign` binary | zipalign is padding in the local file header extra field — the zip writer we already have can do it. Also lets us honour the 16 KB page alignment Android 15+ requires. |

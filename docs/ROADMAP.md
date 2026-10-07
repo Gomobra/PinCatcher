@@ -4,13 +4,21 @@ Status legend: **done** · **in progress** · **not started**
 
 ## Phase 0 — Infrastructure
 
-* [x] Gradle 9.7 + AGP 9.4 (built-in Kotlin), single `:app` module, version catalog
-* [x] Detekt + lint wired into `build.yml`
+* [x] Gradle 9.7 + AGP 9.4 (built-in Kotlin), version catalog
+* [x] `:app` (Android) + `:core` (pure JVM) split, so domain logic is testable
+      off-device — AGP's `aapt2` only ships as an x86_64 Linux binary and cannot
+      run on Android/arm64, so anything touching resources cannot be built on a phone
+* [x] Storage schema on `SQLiteOpenHelper` + FTS4 external-content index
+* [x] Body dedup + refcount accounting, ring-buffer trim, storage totals
+* [x] Android Lint wired into `build.yml`
 * [x] GPL-3.0 licence, `LICENSES.md` attribution
-* [x] GitHub Actions: build, test, release on tag
+* [x] GitHub Actions: build, test, lint, release on tag
 * [x] Manifest permissions that the PRD omitted (see below)
 * [ ] Release signing via `keystore.properties` / CI secrets
 * [ ] Obtainium metadata
+* [ ] Re-add static analysis: detekt is blocked on Kotlin 2.4 metadata
+      (`AnnotationSuppressorFactory` casts `Boolean` to `Iterable`); revisit when
+      a release supports it
 
 ### Permissions the PRD never listed
 

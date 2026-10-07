@@ -2,10 +2,6 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# Room / KSP generated code.
--keep class * extends androidx.room.RoomDatabase { <init>(); }
--dontwarn androidx.room.paging.**
-
 # kotlinx.serialization.
 -keepattributes *Annotation*, InnerClasses
 -dontnote kotlinx.serialization.**
