@@ -19,3 +19,6 @@ keystore.properties
 *.har
 *.pincatcher
 /captures/
+
+# Locally-generated install key. Never commit; CI uses its own from secrets.
+debug-install.jks

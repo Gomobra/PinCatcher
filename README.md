@@ -38,20 +38,21 @@ Done so far:
 
 Requires JDK 17+ and Android SDK with platform 37.2 + build-tools 37.
 
-### Building on a phone is not possible
+### Building on a phone
 
-`aapt2`, which AGP uses to compile and link resources, is only published as an
-**x86_64 Linux** binary. It cannot execute on Android/arm64, and there is no arm64
-build to point it at. So on an on-device checkout:
+Full builds work on-device. AGP resolves `aapt2` from Maven as a linux-x86_64 ELF
+that cannot execute on Android/arm64, but Termux ships a native aarch64 build, so
+`gradle.properties` points AGP at it:
 
-| Works | Fails |
-|---|---|
-| `:core:test` | `:app:assembleDebug` |
-| `:app:compileDebugKotlin` | `:app:lintDebug` |
-| detekt-free static review | anything that links resources |
+```properties
+android.aapt2FromMavenOverride=/data/data/com.termux/files/usr/bin/aapt2   # pkg install aapt2
+```
 
-APK assembly runs in GitHub Actions. This is not a workaround for a bug — it is the
-reason the PRD puts builds on CI in the first place.
+Delete that line on an x86_64 host and in CI - there the Maven artifact is correct.
+Expect a debug build to take ~6 minutes on a phone against ~1 minute on CI.
+
+Build sizes: debug 14 MB, release 958 KB after R8 (no code is wired up yet, so the
+release figure will grow; the PRD budget is 200 MB).
 
 ## Toolchain
 
