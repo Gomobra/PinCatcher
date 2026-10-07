@@ -34,8 +34,9 @@ Without these the corresponding PRD requirements silently do nothing:
 
 ## Phase 1 — Capture engine (highest risk, built first)
 
-* [ ] zdtun vendored + NDK build for arm64-v8a / armeabi-v7a / x86_64
-* [ ] `CaptureVpnService`: tun setup, `protect()` on all outbound sockets
+* [ ] tun read loop feeding `TcpSession`, and the writer injecting replies
+* [ ] upstream socket per session, `protect()`ed so it escapes the tunnel
+* [ ] DNS interception (the resolver itself must be proxied, or resolution loops)
 * [ ] **Drop UDP/443** so QUIC/HTTP3 apps fall back to TCP — otherwise they bypass capture silently
 * [ ] Loop guard: `addDisallowedApplication(self)` + `protect()` + loop-pattern heuristic
 * [ ] HTTP/1.1 + CONNECT front-end on `AsioSelectorManager`

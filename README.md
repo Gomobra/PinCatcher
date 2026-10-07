@@ -22,6 +22,8 @@ Done so far:
 * Capture-storage schema (`sessions`, `flows`, `bodies`, `rules`) with an FTS4
   external-content index over captured flows
 * Body dedup + refcount accounting, ring-buffer trim, storage accounting
+* IPv4/TCP header codec and a user-space `TcpSession` state machine, in pure
+  Kotlin with tests that cover handshake, data, close and 32-bit sequence wrap
 * `CaptureVpnService` with the tun parameters and the loop guard's
   `addDisallowedApplication(self)`
 * App shell: Compose scaffold, theme, three languages, VPN consent manifest
