@@ -1,0 +1,21 @@
+# Built artefacts
+build/
+*/build/
+.gradle/
+.kotlin/
+
+# Local config & secrets
+local.properties
+keystore.properties
+*.jks
+*.keystore
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Captured traffic & patched output (never commit user data)
+*.har
+*.pincatcher
+/captures/

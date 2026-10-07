@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Vector foreground so the icon ships no raster assets. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M44,34h20a8,8 0,0 1,8 8v6a8,8 0,0 1,-8 8h-11v-8h11a2,2 0,0 0,2 -2v-2a2,2 0,0 0,-2 -2h-20a2,2 0,0 0,-2 2v24a2,2 0,0 0,2 2h20a2,2 0,0 0,2 -2v-6h8v6a8,8 0,0 1,-8 8h-20a8,8 0,0 1,-8 -8v-26a8,8 0,0 1,8 -8z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,56m-9,0a9,9 0,1 1,18 0a9,9 0,1 1,-18 0"
+        android:fillAlpha="0" />
+</vector>

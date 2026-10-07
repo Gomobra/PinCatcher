@@ -1,0 +1,31 @@
+<resources>
+    <string name="app_name">PinCatcher</string>
+    <string name="tagline">Tangkap traffic ter-pin. Tanpa root.</string>
+
+    <string name="disclaimer_title">Sebelum mulai</string>
+    <string name="disclaimer_body">PinCatcher untuk menganalisis APK yang Anda punya izin analyzing. Menggunakannya untuk mengakses data tanpa izin itu ilegal. Semua proses lokal di perangkat Anda — tidak ada data yang diunggah.</string>
+    <string name="disclaimer_accept">Saya mengerti dan setuju</string>
+
+    <string name="nav_home">Beranda</string>
+    <string name="nav_capture">Capture</string>
+    <string name="nav_inspector">Inspector</string>
+    <string name="nav_settings">Pengaturan</string>
+
+    <string name="home_pick_app">Pilih aplikasi terpasang</string>
+    <string name="home_pick_file">Buka file APK</string>
+    <string name="home_empty">Belum ada aplikasi discan. Pilih aplikasi untuk extract dan analisis APK-nya.</string>
+
+    <string name="capture_start">Mulai capture</string>
+    <string name="capture_stop">Stop capture</string>
+    <string name="capture_running">Sedang capture</string>
+    <string name="capture_vpn_needed">Android butuh izin untuk membuat tunnel capture.</string>
+    <string name="capture_ca_needed">Install sertifikat CA PinCatcher sebelum capture HTTPS.</string>
+
+    <string name="inspector_empty">Belum ada flow yang di-capture.</string>
+    <string name="inspector_search">Cari URL, header</string>
+    <string name="inspector_export_har">Export HAR</string>
+    <string name="inspector_export_curl">Copy sebagai cURL</string>
+    <string name="inspector_replay">Replay</string>
+
+    <string name="error_generic">Terjadi kesalahan</string>
+</resources>

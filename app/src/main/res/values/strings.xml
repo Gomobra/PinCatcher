@@ -1,0 +1,37 @@
+<resources>
+    <string name="app_name">PinCatcher</string>
+    <string name="tagline">Catch pinned traffic. No root required.</string>
+
+    <!-- Disclaimer gate (PRD 4.1) -->
+    <string name="disclaimer_title">Before you start</string>
+    <string name="disclaimer_body">PinCatcher is for analysing APKs you are authorised to analyse. Using it to access data without permission is illegal. Everything runs locally on your device — nothing is uploaded.</string>
+    <string name="disclaimer_accept">I understand and accept</string>
+
+    <!-- Nav -->
+    <string name="nav_home">Home</string>
+    <string name="nav_capture">Capture</string>
+    <string name="nav_inspector">Inspector</string>
+    <string name="nav_settings">Settings</string>
+
+    <!-- Home -->
+    <string name="home_pick_app">Pick an installed app</string>
+    <string name="home_pick_file">Open an APK file</string>
+    <string name="home_empty">No apps scanned yet. Pick an app to extract and analyse its APK.</string>
+
+    <!-- Capture -->
+    <string name="capture_start">Start capture</string>
+    <string name="capture_stop">Stop capture</string>
+    <string name="capture_running">Capturing</string>
+    <string name="capture_vpn_needed">Android needs permission to set up the capture tunnel.</string>
+    <string name="capture_ca_needed">Install the PinCatcher CA certificate before capturing HTTPS.</string>
+
+    <!-- Inspector -->
+    <string name="inspector_empty">No flows captured yet.</string>
+    <string name="inspector_search">Search URL, headers</string>
+    <string name="inspector_export_har">Export HAR</string>
+    <string name="inspector_export_curl">Copy as cURL</string>
+    <string name="inspector_replay">Replay</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Something went wrong</string>
+</resources>
