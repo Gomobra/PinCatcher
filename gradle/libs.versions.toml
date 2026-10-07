@@ -29,6 +29,8 @@ compose-ui-graphics = { module = "androidx.compose.ui:ui-graphics" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
 compose-material3 = { module = "androidx.compose.material3:material3" }
+# The small core icon set. material3 stopped pulling this in transitively.
+compose-material-icons-core = { module = "androidx.compose.material:material-icons-core" }
 
 
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
