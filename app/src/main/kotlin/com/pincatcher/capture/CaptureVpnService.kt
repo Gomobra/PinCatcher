@@ -79,6 +79,8 @@ class CaptureVpnService : VpnService() {
 
         val tun = TunIo(descriptor)
         val notifier = CaptureNotifier(this)
+        CaptureControl.publish(running = true, packets = 0, rejected = 0, targets = targets)
+
         val capture = CaptureEngine(
             tun = tun,
             dialer = UpstreamDialer(this),
@@ -114,6 +116,7 @@ class CaptureVpnService : VpnService() {
                 val next = CaptureNotifier.State(stats.read, stats.rejected, targets)
                 if (next != state) {
                     state = next
+                    CaptureControl.publish(true, stats.read, stats.rejected, targets)
                     runCatching { notifier.update(next) }
                 }
             }
@@ -141,6 +144,7 @@ class CaptureVpnService : VpnService() {
         reader = null
         runCatching { CaptureNotifier(this).cancel() }
         stopForeground(STOP_FOREGROUND_REMOVE)
+        CaptureControl.publish(running = false, packets = 0, rejected = 0, targets = emptyList())
         stopSelf()
     }
 

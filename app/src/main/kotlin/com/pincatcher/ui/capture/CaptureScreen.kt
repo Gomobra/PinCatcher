@@ -1,8 +1,10 @@
 package com.pincatcher.ui.capture
 
-import android.content.Context
+import android.app.Activity
+import android.content.Intent
 import android.net.VpnService
-import android.security.KeyChain
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,44 +16,75 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.core.content.ContextCompat
+import com.pincatcher.capture.CaptureControl
+import com.pincatcher.capture.CaptureVpnService
 import com.pincatcher.ui.component.SectionRule
+import com.pincatcher.ui.component.StatusDot
 import com.pincatcher.ui.theme.StatusColor
 import com.pincatcher.ui.theme.Token
+import kotlinx.coroutines.delay
 
 /**
- * Macrostructure: **Instrument panel**. Two real checks at the top, then a
- * plainly-worded statement of what is not built yet. Deliberately not a big
- * "Start capture" button that does nothing.
+ * Macrostructure: **instrument panel**. Two real checks at the top, then the
+ * control, then what the tunnel is currently doing.
  *
- * Both checks are live: `VpnService.prepare` reflects whether consent has been
- * granted, and the CA query asks the system whether our root is in the user
- * store.
+ * Both checks are live. `VpnService.prepare` reflects whether consent has been
+ * granted, and it is the only question Android will answer here - there is no API
+ * for asking whether a capture of yours is running, so the counters come from the
+ * service's own published state.
  */
 @Composable
-fun CaptureScreen(modifier: Modifier = Modifier) {
+fun CaptureScreen(modifier: Modifier = Modifier, targets: List<String> = emptyList()) {
     val context = LocalContext.current
 
-    val vpnConsentGranted: Boolean? by produceState<Boolean?>(initialValue = null, context) {
-        value = runCatching { VpnService.prepare(context) == null }.getOrDefault(false)
+    // Bumped after the consent dialog resolves, so the check is asked again rather
+    // than leaving a stale "not granted" sitting behind the button.
+    var consentEpoch by remember { mutableIntStateOf(0) }
+    val consentIntent: Intent? by produceState(initialValue = UNKNOWN, context, consentEpoch) {
+        value = runCatching { VpnService.prepare(context) }.getOrNull()
     }
-    val caInstalled: Boolean? = caStoreState()
-    var lastCheck by remember { mutableStateOf(System.currentTimeMillis()) }
+
+    // Consent is a one-time system dialog that cannot be requested headlessly. If
+    // it is not in hand, ask for it; the launcher then starts the capture itself,
+    // so there is no path where the dialog appears and nothing follows it.
+    val consent = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) launchCapture(context, targets)
+        consentEpoch++
+    }
+
+    var running by remember { mutableStateOf(false) }
+    var packets by remember { mutableLongStateOf(0L) }
+    var quicBlocked by remember { mutableLongStateOf(0L) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            running = CaptureControl.running
+            packets = CaptureControl.packetsRead
+            quicBlocked = CaptureControl.quicBlocked
+            delay(COUNT_INTERVAL_MS)
+        }
+    }
 
     Column(
         modifier = modifier
@@ -74,30 +107,61 @@ fun CaptureScreen(modifier: Modifier = Modifier) {
         CheckRow(
             icon = Icons.Default.Lock,
             title = "VPN tunnel consent",
-            // null = still checking, which is a real state and reads as one.
-            done = vpnConsentGranted == true,
-            pending = vpnConsentGranted == null,
-            body = if ( vpnConsentGranted == true) {
-                "Granted. Android will let PinCatcher route traffic through a local tunnel."
-            } else {
-                "Not granted yet. Android asks once, the first time capture starts."
+            // Unknown = still checking, which is a real state and reads as one.
+            done = consentIntent == null,
+            pending = consentIntent == UNKNOWN,
+            body = when (consentIntent) {
+                null -> "Granted. Android will let PinCatcher route traffic through a local tunnel."
+                UNKNOWN -> "Checking…"
+                else -> "Not granted yet. Android asks once, the first time capture starts."
             },
         )
 
         CheckRow(
             icon = Icons.Default.CheckCircle,
             title = "Root CA in the user store",
-            done = caInstalled == true,
-            pending = caInstalled == null,
-            body = when (caInstalled) {
-                true -> "Installed. HTTPS can be decrypted for apps that trust the user store."
-                false -> "Not installed. Android only trusts user-added CAs for apps whose " +
-                    "network security config allows it, which is what the APK patcher fixes."
-
-                null -> "Cannot be checked yet - Android exposes no way to list the user " +
-                    "CA store. The install wizard lands in Phase 2 and will answer this."
-            },
+            done = false,
+            pending = true,
+            body = "Cannot be checked yet - Android exposes no way to list the user CA store, and " +
+                "the install wizard lands in Phase 2. Until then HTTPS bodies stay encrypted, " +
+                "even though the flows themselves are recorded.",
         )
+
+        SectionRule()
+
+        if (running) {
+            Column(verticalArrangement = Arrangement.spacedBy(Token.SpaceInner)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StatusDot(color = StatusColor.forStatus(200))
+                    Text("  Capturing", style = MaterialTheme.typography.titleSmall)
+                }
+                Text(
+                    text = buildString {
+                        append("$packets packets read")
+                        if (quicBlocked > 0) append(" · $quicBlocked QUIC flows pushed down to TCP")
+                    },
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                OutlinedButton(
+                    onClick = { CaptureControl.stop(context) },
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
+                    Text("Stop")
+                }
+            }
+        } else {
+            Button(
+                onClick = {
+                    val prepare = consentIntent
+                    if (prepare == null) launchCapture(context, targets) else consent.launch(prepare)
+                },
+                enabled = consentIntent != UNKNOWN,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (targets.isEmpty()) "Start capturing" else "Capture ${targets.size} app(s)")
+            }
+        }
 
         SectionRule()
 
@@ -109,38 +173,37 @@ fun CaptureScreen(modifier: Modifier = Modifier) {
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(Token.StatusDotSize * 2),
                 )
-                Text(
-                    text = "  The tunnel is not wired up yet",
-                    style = MaterialTheme.typography.titleSmall,
-                )
+                Text("  What is on the wire right now", style = MaterialTheme.typography.titleSmall)
             }
             Text(
-                text = "The packet codec and the TCP state machine are written and tested, " +
-                    "but nothing reads the tun device yet, so no traffic is recorded. " +
-                    "Treat this tab as a status panel until it says otherwise.",
+                text = "Plaintext HTTP is recorded in full. HTTPS is recorded as a flow - host, " +
+                    "path, timings, sizes - but its body stays encrypted until the CA wizard " +
+                    "exists. QUIC is refused on purpose, so those requests fall back to TCP " +
+                    "instead of disappearing from the capture.",
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            TextButton(
-                onClick = {
-                    lastCheck = System.currentTimeMillis()
-                },
-                enabled = true,
-            ) {
-                Text("Re-check now")
-            }
-            Text(
-                text = "Last checked ${java.text.DateFormat.getTimeInstance().format(lastCheck)}",
-                style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
 }
 
+private fun launchCapture(context: android.content.Context, targets: List<String>) {
+    ContextCompat.startForegroundService(
+        context,
+        Intent(context, CaptureVpnService::class.java)
+            .setAction(CaptureVpnService.ACTION_START)
+            .putStringArrayListExtra(CaptureVpnService.EXTRA_TARGET_PACKAGES, ArrayList(targets)),
+    )
+}
+
+/** "We have not asked yet", which is distinct from "the answer is no". */
+private val UNKNOWN: Intent? = Intent("com.pincatcher.ui.UNKNOWN")
+
+private const val COUNT_INTERVAL_MS = 1_000L
+
 @Composable
 private fun CheckRow(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    icon: ImageVector,
     title: String,
     body: String,
     done: Boolean,
@@ -182,16 +245,3 @@ private fun CheckRow(
         }
     }
 }
-
-/**
- * Whether a root CA of ours is in the system user store.
- *
- * There is no public API for enumerating the user CA store, so before the
- * certificate wizard exists this cannot be answered at all. Returning null
- * makes the UI show "Checking…" rather than a confident "No", which would be a
- * guess dressed up as a fact.
- *
- * Once `CertWizard` lands, this reads our alias out of the KeyChain after
- * `KeyChain.createInstallIntent()` reports success.
- */
-private fun caStoreState(): Boolean? = null
