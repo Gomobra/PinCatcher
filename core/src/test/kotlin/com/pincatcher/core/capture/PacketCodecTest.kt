@@ -1,4 +1,4 @@
-package com.pincatcher.core.capture
+package com.pincatcher.core.capture.net
 
 import java.nio.ByteBuffer
 import org.junit.jupiter.api.Assertions.assertArrayEquals

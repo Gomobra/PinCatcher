@@ -1,4 +1,4 @@
-package com.pincatcher.core.capture
+package com.pincatcher.core.capture.net
 
 import java.nio.ByteBuffer
 
@@ -154,13 +154,6 @@ data class TcpHeader(
         }
     }
 }
-
-data class UdpHeader(
-    val sourcePort: Int,
-    val destinationPort: Int,
-    val length: Int,
-    val checksum: Int,
-)
 
 /** The internet checksum (RFC 1071). Used by both IP and TCP. */
 object Checksum {
