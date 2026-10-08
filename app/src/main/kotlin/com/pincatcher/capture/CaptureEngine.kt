@@ -84,10 +84,19 @@ class CaptureEngine(
         }
     }
 
+    /**
+     * Stops the loop and releases the tun.
+     *
+     * Closing the descriptor is not optional bookkeeping: the reader thread is
+     * blocked inside a file read, and a read on a file descriptor is not
+     * interruptible. Without the close the thread sits there for the life of the
+     * process, still holding the tunnel open after the user asked to stop.
+     */
     fun stop() {
         running = false
         table.drain().forEach { (it as? Connection)?.abandon() }
         resolver.shutdownNow()
+        tun.close()
     }
 
     private fun handle(packet: ByteArray, length: Int) {

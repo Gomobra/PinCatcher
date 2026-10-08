@@ -44,6 +44,12 @@ class CaptureVpnService : VpnService() {
     @Volatile
     private var state: CaptureNotifier.State = CaptureNotifier.State(0, 0, emptyList())
 
+    @Volatile
+    private var alive = false
+
+    @Volatile
+    private var notifierThread: Thread? = null
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_STOP -> {
@@ -79,6 +85,7 @@ class CaptureVpnService : VpnService() {
 
         val tun = TunIo(descriptor)
         val notifier = CaptureNotifier(this)
+        alive = true
         CaptureControl.publish(running = true, packets = 0, rejected = 0, targets = targets)
 
         val capture = CaptureEngine(
@@ -109,8 +116,8 @@ class CaptureVpnService : VpnService() {
 
         // Notification updated from the engine's own counters, so what the
         // notification says and what the tunnel is doing cannot drift apart.
-        Thread({
-            while (!Thread.currentThread().isInterrupted) {
+        notifierThread = Thread({
+            while (!Thread.currentThread().isInterrupted && alive) {
                 Thread.sleep(NOTIFICATION_INTERVAL_MS)
                 val stats = capture.stats
                 val next = CaptureNotifier.State(stats.read, stats.rejected, targets)
@@ -134,6 +141,12 @@ class CaptureVpnService : VpnService() {
     }
 
     private fun stopCapture() {
+        // Order matters. The notifier thread has to be told first: it is the thing
+        // that would otherwise keep re-posting a notification for a capture that
+        // has already been cancelled.
+        alive = false
+        notifierThread?.interrupt()
+        notifierThread = null
         if (sessionId != 0L) {
             runCatching { flowStore.endSession(sessionId) }
             sessionId = 0L
