@@ -11,6 +11,7 @@ coroutines = "1.11.0"
 serialization = "1.11.0"
 apksig = "2.3.0"
 junit = "5.11.4"
+bouncycastle = "1.79"
 
 compileSdk = "37"
 targetSdk = "36"
@@ -44,6 +45,12 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "serialization" }
 
 apksig = { module = "com.android.tools.build:apksig", version.ref = "apksig" }
+
+# X.509 creation. Android has no public API for minting certificates, and
+# sun.security.x509 does not exist on bionic, so this is the only way to sign a
+# leaf per hostname. Pure JVM, so it lives in :core and is unit-tested off-device.
+bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
+bouncycastle-pkix = { module = "org.bouncycastle:bcpkix-jdk18on", version.ref = "bouncycastle" }
 
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter", version.ref = "junit" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }

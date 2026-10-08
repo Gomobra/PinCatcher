@@ -15,6 +15,10 @@ kotlin {
 
 dependencies {
     implementation(libs.kotlinx.coroutines.core)
+    // X.509 minting for the MITM. Pure JVM on purpose: certificate generation is
+    // the part of TLS interception that can be tested without a device.
+    implementation(libs.bouncycastle.prov)
+    implementation(libs.bouncycastle.pkix)
 
     testImplementation(libs.junit.jupiter)
     testImplementation(libs.kotlinx.coroutines.test)

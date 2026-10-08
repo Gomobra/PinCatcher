@@ -824,7 +824,7 @@ Tasks:
 ☐ CONNECT handling
 ☑ TLS MITM:
   ☑ Extract SNI
-  ☐ Generate leaf cert
+  ☑ Generate leaf cert — CA + leaf per host, 15 test
   ☐ Handshake client + server
   ☐ Relay data
 ☐ WebSocket handling
