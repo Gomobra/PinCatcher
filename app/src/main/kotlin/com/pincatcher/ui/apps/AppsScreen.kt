@@ -15,21 +15,27 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import com.pincatcher.apk.InstalledApp
 import com.pincatcher.apk.InstalledApps
@@ -45,12 +51,18 @@ import com.pincatcher.ui.theme.Token
  * Macrostructure: **Workbench**. Left-aligned, controls on top, dense list
  * below - not a centred column of cards.
  *
- * This screen works today. `ApplicationInfo.sourceDir` is readable by any app,
- * so listing and launching needs no root. Extraction is Phase 3, and the row
- * says so rather than pretending a tap does something it cannot.
+ * Two jobs share this list, so a row has to serve both without a mode switch:
+ * tapping the row body opens the app, tapping the checkbox adds it to the next
+ * capture. Opening an app is what this tab has always done; the checkbox is
+ * PRD 6.3. Keeping them on separate hit targets is what stops the new checkbox
+ * from breaking the old one.
  */
 @Composable
-fun AppsScreen(modifier: Modifier = Modifier) {
+fun AppsScreen(
+    modifier: Modifier = Modifier,
+    targets: SnapshotStateList<String>,
+    onCaptureSelected: () -> Unit = {},
+) {
     val context = LocalContext.current
     var apps by remember { mutableStateOf<List<InstalledApp>?>(null) }
     var query by remember { mutableStateOf("") }
@@ -60,7 +72,7 @@ fun AppsScreen(modifier: Modifier = Modifier) {
     LaunchedEffect(includeSystem) {
         val result = InstalledApps.list(context, includeSystem)
         // An empty result and a refused permission look identical from here, so
-        // treat empty-with-a-query-typed differently rather than guessing.
+        // treat empty-with-no-chips-ticked differently rather than guessing.
         loadFailed = result.isEmpty() && !includeSystem
         apps = result
     }
@@ -87,12 +99,25 @@ fun AppsScreen(modifier: Modifier = Modifier) {
             Column(verticalArrangement = Arrangement.spacedBy(Token.SpaceTight)) {
                 Text("Choose a target", style = MaterialTheme.typography.headlineSmall)
                 Text(
-                    text = "PinCatcher reads the APK an app already has on disk. " +
-                        "Uninstalling it later is not required to inspect it.",
+                    text = "Tick the apps to capture. Everything else keeps its normal " +
+                        "network, so unticked apps are unaffected.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+
+            // The scope, stated before anything is picked rather than inferred
+            // from an empty checkbox column. Silent all-apps capture is how someone
+            // ends up recording a device they did not mean to.
+            Text(
+                text = if (targets.isEmpty()) {
+                    "Nothing ticked: the next capture sees every app."
+                } else {
+                    "Will capture ${targets.size} app${if (targets.size == 1) "" else "s"} only."
+                },
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
 
             OutlinedTextField(
                 value = query,
@@ -114,6 +139,21 @@ fun AppsScreen(modifier: Modifier = Modifier) {
                     onClick = { includeSystem = true },
                     label = { Text("Include system") },
                 )
+            }
+
+            Row(horizontalArrangement = Arrangement.spacedBy(Token.SpaceInner)) {
+                OutlinedButton(
+                    onClick = { targets.clear() },
+                    enabled = targets.isNotEmpty(),
+                ) {
+                    Text("Capture everything")
+                }
+                TextButton(
+                    onClick = onCaptureSelected,
+                    enabled = targets.isNotEmpty(),
+                ) {
+                    Text("Continue")
+                }
             }
         }
 
@@ -146,6 +186,10 @@ fun AppsScreen(modifier: Modifier = Modifier) {
                 items(visible, key = { it.packageName }) { app ->
                     AppRow(
                         app = app,
+                        selected = targets.contains(app.packageName),
+                        onToggle = {
+                            if (!targets.remove(app.packageName)) targets.add(app.packageName)
+                        },
                         modifier = Modifier.padding(horizontal = Token.SpaceOuter),
                         onClick = { InstalledApps.launch(context, app.packageName) },
                     )
@@ -156,13 +200,33 @@ fun AppsScreen(modifier: Modifier = Modifier) {
 }
 
 @Composable
-private fun AppRow(app: InstalledApp, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun AppRow(
+    app: InstalledApp,
+    selected: Boolean,
+    onToggle: () -> Unit,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     PressableRow(onClick = onClick, modifier = modifier) {
         Row(
             modifier = Modifier.padding(Token.SpaceBase),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Token.SpaceBase),
         ) {
+            // Separate hit target from the row: opening the app and choosing it for
+            // capture are different intents and one of them is easy to undo.
+            Checkbox(
+                checked = selected,
+                onCheckedChange = { onToggle() },
+                modifier = Modifier.semantics {
+                    contentDescription = if (selected) {
+                        "${app.label}: selected for capture"
+                    } else {
+                        "${app.label}: not selected for capture"
+                    }
+                },
+            )
+
             val icon = remember(app.packageName) { app.icon?.toBitmap() }
             if (icon != null) {
                 Box(Modifier.size(Token.ListIconSize)) {

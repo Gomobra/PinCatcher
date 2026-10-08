@@ -187,15 +187,23 @@ class CaptureVpnService : VpnService() {
 
         // Loop guard layer 1: PinCatcher's own traffic never enters the tunnel it
         // is serving. `protect()` on each socket is layer 2, in UpstreamDialer.
-        builder.addDisallowedApplication(packageName)
-
         if (targets.isEmpty()) {
+            // Loop guard layer 1, and the only thing excluding us when everything
+            // else is captured.
+            builder.addDisallowedApplication(packageName)
             // All routes, so a target chosen later does not need a restart.
             builder.addRoute("0.0.0.0", 0)
         } else {
-            // Per-app filter (PRD 6.3). One unresolvable package must not abort the
-            // whole tunnel: it was uninstalled between picking it and starting.
+            // Per-app filter (PRD 6.3).
+            //
+            // addAllowedApplication and addDisallowedApplication are mutually
+            // exclusive — calling both throws IllegalStateException from
+            // establish(). An allow-list already excludes everything that is not on
+            // it, including us, so naming ourselves here is not just redundant, it
+            // is the thing that makes the tunnel refuse to start.
             targets.forEach { target ->
+                // One unresolvable package must not abort the whole tunnel: it was
+                // uninstalled between being picked and capture starting.
                 if (runCatching { builder.addAllowedApplication(target) }.isFailure) {
                     Log.w(TAG, "no such package to capture: $target")
                 }

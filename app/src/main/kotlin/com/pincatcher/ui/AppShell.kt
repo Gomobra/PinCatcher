@@ -11,9 +11,13 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.toMutableStateList
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -44,9 +48,33 @@ private enum class Tab(val labelRes: Int) {
     SETTINGS(R.string.nav_settings),
 }
 
+/**
+ * The apps the next capture will include. Empty means every app.
+ *
+ * Hoisted here because two screens read it and one writes it: Apps picks,
+ * Capture previews and starts. Saved across configuration changes because losing
+ * a ten-app selection to a rotation is the kind of thing that makes a picker feel
+ * broken - but deliberately not persisted past the process, since it configures
+ * the next capture rather than describing anything already recorded.
+ *
+ * Empty rather than "all selected" is the default state, so the first run
+ * captures everything. A picker with nothing ticked reads as broken; a picker with
+ * two hundred ticked rows reads as noise.
+ */
+@Composable
+private fun rememberCaptureTargets(): SnapshotStateList<String> = rememberSaveable(
+    // Second type argument is what goes in the Bundle, so it is String, not the
+    // list: restore gets back a List<String> and rebuilds the observable wrapper.
+    saver = listSaver<SnapshotStateList<String>, String>(
+        save = { ArrayList(it) },
+        restore = { saved -> saved.toMutableStateList() },
+    ),
+) { mutableStateListOf() }
+
 @Composable
 fun AppShell() {
     var tab by rememberSaveable { mutableStateOf(Tab.CAPTURE) }
+    val targets = rememberCaptureTargets()
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -84,9 +112,13 @@ fun AppShell() {
                 .padding(padding),
         ) {
             when (tab) {
-                Tab.CAPTURE -> CaptureScreen()
+                Tab.CAPTURE -> CaptureScreen(targets = targets)
                 Tab.TRAFFIC -> TrafficScreen()
-                Tab.APPS -> AppsScreen()
+                Tab.APPS -> AppsScreen(
+                    targets = targets,
+                    onCaptureSelected = { tab = Tab.CAPTURE },
+                )
+
                 Tab.SETTINGS -> SettingsScreen()
             }
         }

@@ -129,6 +129,20 @@ fun CaptureScreen(modifier: Modifier = Modifier, targets: List<String> = emptyLi
 
         SectionRule()
 
+        // PRD 6.3's preview. Which apps the tunnel will carry has to be readable
+        // here, on the button that starts it: an allow-list that quietly reverts
+        // to all-apps records a device by surprise.
+        Text(
+            text = if (targets.isEmpty()) {
+                "Scope: every app except PinCatcher."
+            } else {
+                "Scope: ${targets.size} app${if (targets.size == 1) "" else "s"}, " +
+                    "everything else keeps its normal network."
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+
         if (running) {
             Column(verticalArrangement = Arrangement.spacedBy(Token.SpaceInner)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {

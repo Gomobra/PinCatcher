@@ -799,7 +799,7 @@ Tasks:
 ☑ HTTP parser
 ☐ WebSocket
 ☐ Streaming body — badan di-buffer sampai pesan selesai, bukan dialirkan
-☑ Per-app filter — mekanismenya ada, UI pemilihnya belum (6.3)
+☑ Per-app filter
 ☑ Loop guard
 
 Sub-Feature 6.1: Proxy Server
@@ -867,9 +867,9 @@ addAllowedApplication(package) — hanya capture app target.
 
 Tasks:
 
-☐ Package picker UI
-☐ Apply addAllowedApplication / addDisallowedApplication
-☐ Preview: "hanya capture app X"
+☑ Package picker UI — checkbox per baris, hit target terpisah dari membuka app
+☑ Apply addAllowedApplication / addDisallowedApplication
+☑ Preview: scope dibaca di tab Capture, tepat di tombol yang memulai
 
 Sub-Feature 6.4: Loop Guard ⭐
 
