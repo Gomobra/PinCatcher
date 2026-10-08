@@ -12,6 +12,48 @@ class FlowStore(private val db: PincatcherDatabase) {
     fun insert(flow: Flow): Long =
         db.writableDatabase.insertOrThrow("flows", null, flow.toContentValues())
 
+    /**
+     * Opens a capture session and returns its id.
+     *
+     * Every flow belongs to one, so a second run cannot be confused with the
+     * first. `targetPackages` records what was being captured: a capture of one
+     * app and a capture of everything produce very different traffic, and a row
+     * that cannot answer "which?" is not much of a record.
+     */
+    fun startSession(
+        name: String,
+        mode: String,
+        targetPackages: List<String>,
+        storagePolicy: String? = null,
+        startedAt: Long = System.currentTimeMillis(),
+    ): Long = db.writableDatabase.insertOrThrow(
+        "sessions",
+        null,
+        android.content.ContentValues().apply {
+            put("name", name)
+            put("started_at", startedAt)
+            put("mode", mode)
+            put("target_packages", targetPackages.joinToString(","))
+            put("storage_policy", storagePolicy)
+        },
+    )
+
+    fun endSession(id: Long, endedAt: Long = System.currentTimeMillis()): Int =
+        db.writableDatabase.update(
+            "sessions",
+            android.content.ContentValues().apply { put("ended_at", endedAt) },
+            "id = ?",
+            arrayOf(id.toString()),
+        )
+
+    fun mostRecentSession(): Long? = db.readableDatabase
+        .rawQuery("SELECT id FROM sessions ORDER BY started_at DESC LIMIT 1", null)
+        .use { if (it.moveToFirst()) it.getLong(0) else null }
+
+    fun sessionCount(sessionId: Long): Long = db.readableDatabase
+        .rawQuery("SELECT COUNT(*) FROM flows WHERE session_id = ?", arrayOf(sessionId.toString()))
+        .use { if (it.moveToFirst()) it.getLong(0) else 0L }
+
     fun byId(id: Long): Flow? =
         db.readableDatabase.rawQuery("SELECT * FROM flows WHERE id = ?", arrayOf(id.toString()))
             .use { if (it.moveToFirst()) Flow.from(it) else null }

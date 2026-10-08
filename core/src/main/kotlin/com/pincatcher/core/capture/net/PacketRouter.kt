@@ -10,15 +10,34 @@ import java.nio.ByteBuffer
  * a device.
  */
 sealed interface PacketVerdict {
-    /** Hand to the TCP session for this flow. */
-    data class Tcp(val key: FlowKey, val payload: ByteArray) : PacketVerdict
+    /**
+     * Hand to the TCP session for this flow.
+     *
+     * The parsed headers ride along rather than being re-read by the caller:
+     * the Android layer has to feed both to `TcpSession.onClientSegment`, and
+     * parsing the same 40 bytes twice per packet is work with no second opinion
+     * to gain from it.
+     */
+    data class Tcp(
+        val key: FlowKey,
+        val ip: Ipv4Header,
+        val tcp: TcpHeader,
+        val payload: ByteArray,
+    ) : PacketVerdict
 
     /** A DNS query to forward out of the tunnel, protect()ed so it does not recurse. */
     data class Dns(val key: FlowKey, val query: ByteArray) : PacketVerdict
 
-    /** Reply to the client with a synthesised ICMP unreachable and drop the payload. */
+    /**
+     * Reply to the client with a synthesised ICMP unreachable and drop the payload.
+     *
+     * The client's own address and port ride along because [FlowKey] is
+     * direction-blind and the reply has to go back to whoever sent the packet, not
+     * to whichever end of the key happens to be smaller.
+     */
     data class RejectWithUnreachable(
         val key: FlowKey,
+        val client: Endpoint,
         val original: Ipv4Header,
         val code: Int,
         val reason: String,
@@ -82,6 +101,8 @@ object PacketRouter {
                 ip.sourceAddress, tcp.sourcePort,
                 ip.destinationAddress, tcp.destinationPort,
             ),
+            ip = ip,
+            tcp = tcp,
             payload = payload,
         )
     }
@@ -111,6 +132,7 @@ object PacketRouter {
             UDP_PORT_DNS -> PacketVerdict.Dns(key, payload)
             UDP_PORT_QUIC -> PacketVerdict.RejectWithUnreachable(
                 key = key,
+                client = Endpoint(ip.sourceAddress, udp.sourcePort),
                 original = ip,
                 code = ICMP_PORT_UNREACHABLE,
                 // Said plainly, because this is the single decision that most

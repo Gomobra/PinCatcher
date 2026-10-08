@@ -30,25 +30,40 @@ object HttpHead {
         fun asList(): List<Pair<String, String>> = list
     }
 
+    /**
+     * What both kinds of head have in common.
+     *
+     * `bodyLength` and `isChunked` are on the interface rather than only on the
+     * subclasses because the reassembler asks those two questions of every head
+     * it parses without caring which kind it is, and a caller forced to branch on
+     * the subtype to ask will eventually forget the branch.
+     */
     sealed interface Head {
+        val headers: Headers
+
+        /** Declared body size, or -1 when the body is chunked or unstated. */
+        val bodyLength: Int
+
+        val isChunked: Boolean
+
         data class Request(
             val method: String,
             val target: String,
             val version: String,
-            val headers: Headers,
-            val bodyLength: Int,
+            override val headers: Headers,
+            override val bodyLength: Int,
             val headBytes: Int,
-            val isChunked: Boolean,
+            override val isChunked: Boolean,
         ) : Head
 
         data class Response(
             val version: String,
             val status: Int,
             val reason: String,
-            val headers: Headers,
-            val bodyLength: Int,
+            override val headers: Headers,
+            override val bodyLength: Int,
             val headBytes: Int,
-            val isChunked: Boolean,
+            override val isChunked: Boolean,
         ) : Head
     }
 
