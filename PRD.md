@@ -822,8 +822,8 @@ Tasks:
 ☑ Relay in-process (pengganti Ktor CIO server — lihat catatan di bawah)
 ☑ HTTP parser (HttpHead + HttpStream, 76 test)
 ☐ CONNECT handling
-☐ TLS MITM:
-  ☐ Extract SNI
+☑ TLS MITM:
+  ☑ Extract SNI
   ☐ Generate leaf cert
   ☐ Handshake client + server
   ☐ Relay data
