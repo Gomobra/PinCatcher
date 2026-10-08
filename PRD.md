@@ -794,13 +794,13 @@ Non-root capture via VpnService. Proxy lokal MITM dengan user CA cert.
 
 Tasks:
 
-☐ Proxy server (Ktor CIO)
+☑ Traffic relay (in-process, bukan Ktor — lihat catatan 6.1)
 ☐ TLS MITM
-☐ HTTP parser
+☑ HTTP parser
 ☐ WebSocket
-☐ Streaming body
-☐ Per-app filter
-☐ Loop guard
+☐ Streaming body — badan di-buffer sampai pesan selesai, bukan dialirkan
+☑ Per-app filter — mekanismenya ada, UI pemilihnya belum (6.3)
+☑ Loop guard
 
 Sub-Feature 6.1: Proxy Server
 
@@ -819,8 +819,8 @@ Fitur:
 
 Tasks:
 
-☐ Ktor CIO server
-☐ HTTP parser
+☑ Relay in-process (pengganti Ktor CIO server — lihat catatan di bawah)
+☑ HTTP parser (HttpHead + HttpStream, 76 test)
 ☐ CONNECT handling
 ☐ TLS MITM:
   ☐ Extract SNI
@@ -831,6 +831,20 @@ Tasks:
 ☐ Streaming → Storage
 ☐ Backpressure
 
+Catatan — kenapa relay-nya in-process, bukan Ktor CIO:
+
+Ktor di Mode VPN butuh loopback: tun → proxy TCP di 127.0.0.1 → soket asli.
+Itu menambah satu transport utuh hanya supaya demultiplexing kembali ke TCP
+bisa dilakukan, padahal tunnel sudah memegang 5-tuple itu sendiri. Ongkosnya
+nyata — listener loopback adalah sumber paling umum bug rekursi (sambungan
+proxy ikut masuk ke tun), dan di API 36 butuh izin ACCESS_LOCAL_NETWORK.
+
+Relay in-process menghilangkan satu hop dan satu kelas bug. Bentuknya berbeda dari
+rencana; fungsinya — menerjemahkan byte TCP jadi HTTP yang bisa dibaca — sama,
+dan itu yang diuji. Konsekuensinya: "proxy" di PRD ini berarti relay di dalam
+CaptureEngine, bukan listener terpisah. Ktor masih masuk akal untuk Mode Proxy
+eksplisit kalau produknya nanti jadi dua mode.
+
 Sub-Feature 6.2: VPN Mode (Primary)
 
 Idea:
@@ -838,13 +852,13 @@ Route traffic via tun ke proxy lokal. Non-root friendly.
 
 Tasks:
 
-☐ VpnService setup
-☐ Builder: address, route, DNS
-☐ tun → proxy redirect
-☐ Packet parser (TCP minimal)
-☐ DNS handling
-☐ Foreground service + notif
-☐ Handle VPN permission deny
+☑ VpnService setup
+☑ Builder: address, route, DNS
+☑ tun → relay (in-process, lihat catatan 6.1)
+☑ Packet parser (TCP minimal)
+☑ DNS handling — di-relay ke resolver sistem, di-protect()
+☑ Foreground service + notif
+☑ Handle VPN permission deny — establish() null → stop + UI tasked
 
 Sub-Feature 6.3: Per-App Filter
 
@@ -891,11 +905,25 @@ if (detectLoopPattern(flows)) {
 
 Tasks:
 
-☐ Layer 1: addDisallowedApplication(self)
-☐ Layer 2: proxy UID filter
-☐ Layer 3: loop detection + auto-stop
-☐ Test: buka PinCatcher saat VPN aktif, assert 0 flow
-☐ Dokumentasikan di FAQ
+☑ Layer 1: addDisallowedApplication(self)
+☑ Layer 2: filter sumber tun + protect() per-socket
+☑ Layer 3: loop detection + auto-stop
+☐ Test on-device: buka PinCatcher saat VPN aktif, assert 0 flow
+☑ Test unit: 6 test mengunci premis filter (tun = sumber tiap flow)
+☑ Dokumentasikan di FAQ
+
+Catatan — Layer 2 bukan getUidFromSocket:
+
+getUidFromSocket adalah hidden API, dan tidak akan dipakai di app yang lolos
+Play Protect. Gantinya untuk app yang lolos Play Protect. setiap socket yang dibuka
+keluar dari tunnel dik.protect(), dan setiap paket yang masuk ke tun dengan
+ sumber bukan alamat tun langsung dibuang.
+
+Tanda loopnya justru kebalikan dari intuisi. Saat VPN aktif, tun adalah default
+route, jadi aplikasi mengirim dengan alamat tun sebagai sumber — tiap paket app
+yang tertangkap punya sumber itu. Maka "sumber = alamat kita" bukan tanda loop;
+tanda loopnya paket yang datang dari alamat LAIN, yang hanya bisa jadi traffic
+kita sendiri yang lolos dari protect(), atau spoof.
 
 ---
 
@@ -2145,6 +2173,27 @@ A: Hanya jika Anda punya izin. Beberapa app banking punya anti-tamper kuat yang 
 
 Q: Apakah data saya dikirim ke server?
 A: Tidak. Semua proses lokal.
+
+Q: Kenapa aplikasi PinCatcher sendiri tidak ikut ter-capture saat tunnel aktif?
+A: Tiga lapis, dan lapis pertama yang biasanya sudah cukup:
+
+  1. addDisallowedApplication(packageName) saat membangun tun, sehingga traffic
+     PinCatcher tidak pernah masuk ke tunnel yang dilayaninya sendiri.
+  2. protect() di setiap socket yang dibuka ke luar tunnel (upstream TCP dan
+     relay DNS). Tanpa ini kernel akan mengembalikan socket kita ke tun sendiri,
+     dan tunnel akan macet melawan dirinya sendiri.
+  3. Filter di dalam engine: setiap paket yang masuk ke tun dengan sumber bukan
+     alamat tun langsung dibuang tanpa dibalas.
+
+Lapis ketiga punya satu hal yang sering terbalik. Saat VPN aktif, tun adalah
+default route, jadi aplikasi mengirim dengan alamat tun sebagai sumber. Artinya
+"paket dari alamat sendiri" BUKAN tanda loop — setiap paket app punya sumber
+itu. Tanda loopnya justru sebaliknya: paket yang datang dari alamat lain, yang
+hanya bisa jadi traffic kita sendiri yang lolos dari protect(), atau spoof.
+
+Kalau capture berhenti sendiri dengan notifikasi "loop detected", itu lapis
+ketiga yang bekerja. Tunnelnya sudah dimatikan karena membiarkannya berjalan
+akan membekukan jaringan device.
 
 Q: Bagaimana cara update?
 A: Via GitHub Releases. Bisa manual atau pakai Obtainium.
