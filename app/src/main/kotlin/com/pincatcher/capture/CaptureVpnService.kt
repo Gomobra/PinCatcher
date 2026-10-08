@@ -5,6 +5,7 @@ import android.net.ConnectivityManager
 import android.net.VpnService
 import android.os.ParcelFileDescriptor
 import android.util.Log
+import com.pincatcher.core.capture.net.Ipv4
 import com.pincatcher.data.FlowRecorder
 import com.pincatcher.data.FlowStore
 import org.koin.android.ext.android.inject
@@ -91,6 +92,7 @@ class CaptureVpnService : VpnService() {
         val capture = CaptureEngine(
             tun = tun,
             dialer = UpstreamDialer(this),
+            tunAddress = Ipv4.parse(TUN_ADDRESS),
             upstreamDns = upstreamDns,
             // Every TCP connection gets a tap; the recorder decides from the first
             // bytes whether there is plaintext HTTP on it worth keeping.

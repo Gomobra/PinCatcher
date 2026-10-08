@@ -1,6 +1,7 @@
 package com.pincatcher.capture
 
 import android.util.Log
+import com.pincatcher.core.capture.loop.LoopGuard
 import com.pincatcher.core.capture.loop.LoopVerdict
 import com.pincatcher.core.capture.net.Ipv4
 import com.pincatcher.data.FlowRecorder
@@ -8,6 +9,7 @@ import com.pincatcher.core.capture.net.ConnectionTable
 import com.pincatcher.core.capture.net.Endpoint
 import com.pincatcher.core.capture.net.FlowKey
 import com.pincatcher.core.capture.net.PacketRouter
+import com.pincatcher.core.capture.net.Ipv4Header
 import com.pincatcher.core.capture.net.PacketVerdict
 import com.pincatcher.core.capture.net.ReplyPackets
 import com.pincatcher.core.capture.net.TcpSession
@@ -45,6 +47,8 @@ import java.util.concurrent.atomic.AtomicLong
 class CaptureEngine(
     private val tun: TunIo,
     private val dialer: UpstreamDialer,
+    /** This tunnel's address. A packet from any other source is not an app's. */
+    private val tunAddress: Int,
     private val upstreamDns: List<InetAddress>,
     private val newTap: (FlowKey, Int) -> FlowRecorder.Tap?,
     private val onLoopSuspected: (LoopVerdict) -> Unit,
@@ -61,10 +65,12 @@ class CaptureEngine(
 
     private val packetsRead = AtomicLong()
     private val packetsRejected = AtomicLong()
+    private val foreignPackets = AtomicLong()
 
-    val stats: Stats get() = Stats(packetsRead.get(), packetsRejected.get(), table.size)
+    val stats: Stats
+        get() = Stats(packetsRead.get(), packetsRejected.get(), foreignPackets.get(), table.size)
 
-    data class Stats(val read: Long, val rejected: Long, val connections: Int)
+    data class Stats(val read: Long, val rejected: Long, val foreign: Long, val connections: Int)
 
     /** Blocks until [stop] or until the tun goes away. */
     fun run() {
@@ -100,6 +106,17 @@ class CaptureEngine(
     }
 
     private fun handle(packet: ByteArray, length: Int) {
+        // Loop guard layer 2, before anything else looks at the packet. Every app
+        // behind this tun sends with the tun address as its source, so anything else
+        // is our own escaped traffic arriving again, or a spoof. Neither is
+        // answered - replying is how a tunnel ends up talking to itself.
+        val source = Ipv4Header.parse(java.nio.ByteBuffer.wrap(packet, 0, length))?.sourceAddress
+        if (source != null && LoopGuard.classify(source, tunAddress) == LoopGuard.Origin.Foreign) {
+            foreignPackets.incrementAndGet()
+            reportLoop(source)
+            return
+        }
+
         when (val verdict = PacketRouter.route(packet, length)) {
             is PacketVerdict.Tcp -> onTcp(verdict)
             is PacketVerdict.Dns -> resolver.execute { forwardDns(verdict) }
@@ -167,11 +184,6 @@ class CaptureEngine(
      * is exactly when several connections arrive at once.
      */
     private fun connectUpstream(connection: Connection, verdict: PacketVerdict.Tcp) {
-        val loopVerdict = table.onPacketObserved(verdict.key.show, isOwnAddress = false, now = now())
-        if (loopVerdict == LoopVerdict.LoopSuspected) {
-            onLoopSuspected(loopVerdict)
-            return
-        }
         val socket = dialer.tcp(verdict.ip.destinationAddress, verdict.tcp.destinationPort)
         if (socket == null) {
             connection.abandon()
@@ -236,6 +248,18 @@ class CaptureEngine(
      */
     private fun clientEndOf(key: FlowKey): Endpoint? =
         if (key.first.port == DNS_PORT) key.second else key.first
+
+    /**
+     * Counts one foreign packet and stops the capture once they keep coming.
+     *
+     * Layer 3 of the guard, fed by layer 2's filter. The key includes the address,
+     * so a burst of unrelated spoofed packets spread across sources never trips it
+     * - only one address insisting, which is what an escaped socket looks like.
+     */
+    private fun reportLoop(source: Int) {
+        val verdict = table.onPacketObserved(Ipv4.toString(source), isOwnAddress = true, now = now())
+        if (verdict == LoopVerdict.LoopSuspected) onLoopSuspected(verdict)
+    }
 
     private fun now(): Long = System.currentTimeMillis()
 
